@@ -20,31 +20,18 @@ public class GameWindow extends JFrame {
         Cell colourTwo = firstIsRed ? Cell.Y : Cell.R;
 
         // Build players based on chosen mode
-        Player playerOne;
-        Player playerTwo;
-        //int difficulty = 0;
-
-        switch (mode) {
-            case ModeDialog.HUMAN_VS_HUMAN:
-                playerOne = new HumanPlayer(colourOne);
-                playerTwo = new HumanPlayer(colourTwo);
-                break;
-            case ModeDialog.HUMAN_VS_AI:
-                int difficulty = DifficultyDialog.show(this);
-                if (difficulty == DifficultyDialog.CANCELLED) {
-                    System.exit(0);
-                }
-                playerOne = new HumanPlayer(colourOne);
-                playerTwo = new AIPlayer(colourTwo, difficulty);
-                break;
-            case ModeDialog.AI_VS_AI:
-                playerOne = new AIPlayer(colourOne, 3);
-                playerTwo = new AIPlayer(colourTwo, 3);
-                break;
-            default:
-                playerOne = new HumanPlayer(colourOne);
-                playerTwo = new HumanPlayer(colourTwo);
+        
+        int difficulty = 0;
+        if (mode == ModeDialog.HUMAN_VS_AI ) {
+            difficulty = DifficultyDialog.show(this);
+            if (difficulty == DifficultyDialog.CANCELLED) {
+                System.exit(0);
+            }
         }
+        
+        Player playerOne = PlayerFactory.createPlayer(mode, colourOne, difficulty, true);
+        Player playerTwo = PlayerFactory.createPlayer(mode, colourTwo, difficulty, false);
+
 
         Board board = new Board();
         add(new BoardPanel(board, playerOne, playerTwo));
