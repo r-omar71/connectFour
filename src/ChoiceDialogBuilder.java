@@ -18,21 +18,35 @@ public class ChoiceDialogBuilder implements DialogBuilder{
     }
 
     private final Window parent;
-    private  String windowTitle= "";
-    private String title= "";
-    private String subtitle= null;
+    private  String windowTitle;
+    private String title;
+    private String subtitle;
     private final List<ButtonSpec> buttons= new ArrayList<>();
 
     //خصائص الdialog الافتراضية
-    private int buttonWidth= 260;
-    private int buttonHeight= 50;
-    private int fontSize= 15;
-    private boolean horizontal= false;
-    private int defaultValue= -1;
+    private int buttonWidth;
+    private int buttonHeight;
+    private int fontSize;
+    private boolean horizontal;
+    private int defaultValue;
 
 
     public ChoiceDialogBuilder(Window parent){
         this.parent= parent;
+        reset();
+    }
+
+    // يرجّع البيلدر لحالته الافتراضية عشان يقدر يبني dialog جديد من الصفر
+    private void reset(){
+        windowTitle= "";
+        title= "";
+        subtitle= null;
+        buttons.clear();
+        buttonWidth= 260;
+        buttonHeight= 50;
+        fontSize= 15;
+        horizontal= false;
+        defaultValue= -1;
     }
 
     //setters
@@ -132,6 +146,8 @@ public class ChoiceDialogBuilder implements DialogBuilder{
         dialog.add(panel);
         dialog.pack();
         dialog.setLocationRelativeTo(parent);
+
+        reset();
         return dialog; //the product
     }
 
