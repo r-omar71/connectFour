@@ -9,7 +9,7 @@ public class GameWindow extends JFrame {
         setResizable(false);
 
         // Show mode selection dialog
-        int mode = ModeDialog.show(this);
+        int mode = new ModeDialog(new ChoiceDialogBuilder(this)).construct();
         if (mode == ModeDialog.CANCELLED) {
             System.exit(0);
         }
@@ -23,7 +23,7 @@ public class GameWindow extends JFrame {
         
         int difficulty = 0;
         if (mode == ModeDialog.HUMAN_VS_AI ) {
-            difficulty = DifficultyDialog.show(this);
+            difficulty = new DifficultyDialog(new ChoiceDialogBuilder(this)).construct();
             if (difficulty == DifficultyDialog.CANCELLED) {
                 System.exit(0);
             }

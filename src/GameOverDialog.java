@@ -25,8 +25,4 @@ public class GameOverDialog {
                 .build()
                 .showAndGetResult();
     }
-
-    public static int show(Window parent, String message) {
-        return new GameOverDialog(new ChoiceDialogBuilder(parent)).construct(message);
-    }
 }

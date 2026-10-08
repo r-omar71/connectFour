@@ -26,8 +26,4 @@ public class ModeDialog {
                 .build()
                 .showAndGetResult();
     }
-
-    public static int show(Window parent) {
-        return new ModeDialog(new ChoiceDialogBuilder(parent)).construct();
-    }
 }

@@ -26,8 +26,4 @@ public class DifficultyDialog {
                 .build()
                 .showAndGetResult();
     }
-
-    public static int show(Window parent) {
-        return new DifficultyDialog(new ChoiceDialogBuilder(parent)).construct();
-    }
 }
