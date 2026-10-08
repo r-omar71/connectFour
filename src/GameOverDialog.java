@@ -22,6 +22,7 @@ public class GameOverDialog {
                 .addButton("Play Again", new Color(80, 200, 120), PLAY_AGAIN)
                 .addButton("Quit",       new Color(180, 60, 60),  QUIT)
                 .setDefaultValue(QUIT)
+                .build()
                 .showAndGetResult();
     }
 

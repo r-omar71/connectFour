@@ -23,6 +23,7 @@ public class DifficultyDialog {
                 .addButton("Medium", new Color(240, 200, 40), MEDIUM)
                 .addButton("Hard",   new Color(80, 160, 255), HARD)
                 .setDefaultValue(CANCELLED)
+                .build()
                 .showAndGetResult();
     }
 

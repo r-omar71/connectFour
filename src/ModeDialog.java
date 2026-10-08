@@ -23,6 +23,7 @@ public class ModeDialog {
                 .addButton("Human vs AI",    new Color(240, 200, 40), HUMAN_VS_AI)
                 .addButton("AI vs AI",       new Color(80, 160, 255), AI_VS_AI)
                 .setDefaultValue(CANCELLED)
+                .build()
                 .showAndGetResult();
     }
 

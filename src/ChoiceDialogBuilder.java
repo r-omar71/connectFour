@@ -29,7 +29,6 @@ public class ChoiceDialogBuilder implements DialogBuilder{
     private int fontSize= 15;
     private boolean horizontal= false;
     private int defaultValue= -1;
-    private int result;
 
 
     public ChoiceDialogBuilder(Window parent){
@@ -87,10 +86,8 @@ public class ChoiceDialogBuilder implements DialogBuilder{
     }
     
   @Override
-    public JDialog build(){
-        JDialog dialog= new JDialog(parent, windowTitle, Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        dialog.setResizable(false);
+    public ChoiceDialog build(){
+        ChoiceDialog dialog= new ChoiceDialog(parent, windowTitle, defaultValue);
         
         //القالب الاساسي
         JPanel panel = new JPanel(new BorderLayout(0, horizontal ? 24 : 20));
@@ -138,16 +135,9 @@ public class ChoiceDialogBuilder implements DialogBuilder{
         return dialog; //the product
     }
 
-  @Override
-    public int showAndGetResult(){
-        result= defaultValue;
-        JDialog dialog= build();
-        dialog.setVisible(true);
-        return result;
-    }
-
+  
     //creating a button - same logic as before but cleaner
-    private JButton createButton(ButtonSpec spec, JDialog dialog){
+    private JButton createButton(ButtonSpec spec, ChoiceDialog dialog){
         Color accent= spec.color;
         JButton btn= new JButton(spec.label){
             @Override 
@@ -173,11 +163,9 @@ public class ChoiceDialogBuilder implements DialogBuilder{
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setFocusPainted(false);
 
-        btn.addActionListener(e -> {
-            result= spec.value;
-            dialog.dispose();
-        });
+        btn.addActionListener(e -> dialog.choose(spec.value));
 
         return btn;
     }

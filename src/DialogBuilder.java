@@ -1,5 +1,4 @@
 import java.awt.*;
-import javax.swing.*;
 
 public interface DialogBuilder {
     DialogBuilder setWindowTitle(String windowTitle);
@@ -10,6 +9,5 @@ public interface DialogBuilder {
     DialogBuilder setButtonFont(int size);
     DialogBuilder setHorizontal(boolean horizontal);
     DialogBuilder setDefaultValue(int value);
-    JDialog build();
-    int showAndGetResult();
+    ChoiceDialog build();
 }
