@@ -112,7 +112,10 @@ public class BoardPanel extends JPanel {
             SwingUtilities.invokeLater(() -> {
                 String message = isDraw ? "It's a draw!" :
                         (winner == Cell.R ? "Red" : "Yellow") + " wins!";
-                int choice = GameOverDialog.show(SwingUtilities.getWindowAncestor(this), message);
+                Window window = SwingUtilities.getWindowAncestor(this);
+                DialogBuilder gameOverBuilder = new ChoiceDialogBuilder(window);
+                GameOverDialog gameOverDialog = new GameOverDialog(gameOverBuilder);
+                int choice = gameOverDialog.construct(message);
                 if (choice == GameOverDialog.PLAY_AGAIN) {
                     resetGame();
                 } else {
