@@ -9,7 +9,9 @@ public class GameWindow extends JFrame {
         setResizable(false);
 
         // Show mode selection dialog
-        int mode = ModeDialog.show(this);
+        DialogBuilder modeBuilder = new ChoiceDialogBuilder(this);
+        ModeDialog modeDialog = new ModeDialog(modeBuilder);
+        int mode = modeDialog.construct();
         if (mode == ModeDialog.CANCELLED) {
             System.exit(0);
         }
@@ -20,31 +22,41 @@ public class GameWindow extends JFrame {
         Cell colourTwo = firstIsRed ? Cell.Y : Cell.R;
 
         // Build players based on chosen mode
-        Player playerOne;
-        Player playerTwo;
-        //int difficulty = 0;
-
-        switch (mode) {
-            case ModeDialog.HUMAN_VS_HUMAN:
-                playerOne = new HumanPlayer(colourOne);
-                playerTwo = new HumanPlayer(colourTwo);
-                break;
-            case ModeDialog.HUMAN_VS_AI:
-                int difficulty = DifficultyDialog.show(this);
-                if (difficulty == DifficultyDialog.CANCELLED) {
-                    System.exit(0);
-                }
-                playerOne = new HumanPlayer(colourOne);
-                playerTwo = new AIPlayer(colourTwo, difficulty);
-                break;
-            case ModeDialog.AI_VS_AI:
-                playerOne = new AIPlayer(colourOne, 3);
-                playerTwo = new AIPlayer(colourTwo, 3);
-                break;
-            default:
-                playerOne = new HumanPlayer(colourOne);
-                playerTwo = new HumanPlayer(colourTwo);
+        
+        int difficulty = 0;
+        if (mode == ModeDialog.HUMAN_VS_AI ) {
+            DialogBuilder difficultyBuilder = new ChoiceDialogBuilder(this);
+            DifficultyDialog difficultyDialog = new DifficultyDialog(difficultyBuilder);
+            difficulty = difficultyDialog.construct();
+            if (difficulty == DifficultyDialog.CANCELLED) {
+                System.exit(0);
+            }
         }
+
+        // Decide what type of player sits in each seat (game rules)
+            int typeOne, typeTwo, aiLevel;
+            switch (mode) {
+                case ModeDialog.HUMAN_VS_AI:
+                    typeOne = PlayerFactory.HUMAN;
+                    typeTwo = PlayerFactory.AI;
+                    aiLevel = difficulty;
+                break;
+                case ModeDialog.AI_VS_AI:
+                    typeOne = PlayerFactory.AI;
+                    typeTwo = PlayerFactory.AI;
+                    aiLevel = 3;
+                break;
+                default: // HUMAN_VS_HUMAN
+                    typeOne = PlayerFactory.HUMAN;
+                    typeTwo = PlayerFactory.HUMAN;
+                    aiLevel = 0;
+            }
+
+             // Ask the factory to create them (object creation)
+            Player playerOne = PlayerFactory.createPlayer(typeOne, colourOne, aiLevel);
+            Player playerTwo = PlayerFactory.createPlayer(typeTwo, colourTwo, aiLevel);
+        
+
 
         Board board = new Board();
         add(new BoardPanel(board, playerOne, playerTwo));
