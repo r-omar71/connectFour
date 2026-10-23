@@ -3,6 +3,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+// Client: talks to GameFacade only, never to Board directly
 public class BoardPanel extends JPanel {
 
     private static final int CELL_SIZE = 100;
@@ -10,38 +11,34 @@ public class BoardPanel extends JPanel {
     private static final int COLS = 7;
     private static final int HEADER_HEIGHT = 100;
 
-    private final Board board;
-    private final Player playerOne;
-    private final Player playerTwo;
-    private Player currentPlayer;
+    private final GameFacade game;   // the Facade
+    private int hoveredCol = -1;     // UI only: which column the mouse is over
 
-    private Cell winner = null;
-    private boolean isDraw = false;
-    private int hoveredCol = -1;
-
-    public BoardPanel(Board board, Player playerOne, Player playerTwo) {
-        this.board = board;
-        this.playerOne = playerOne;
-        this.playerTwo = playerTwo;
-        this.currentPlayer = playerOne;
+    public BoardPanel(GameFacade game){
+        this.game = game;
 
         setPreferredSize(new Dimension(COLS * CELL_SIZE, ROWS * CELL_SIZE + HEADER_HEIGHT));
         setBackground(new Color(10, 10, 28));
 
+        // Mouse click: a human chooses a column
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                if (winner != null || isDraw) return;
-                if (!(currentPlayer instanceof HumanPlayer)) return;
+                if (game.isGameOver())
+                     return;
+                if (!(game.getCurrentPlayer() instanceof HumanPlayer))
+                     return;
 
                 int col = e.getX() / CELL_SIZE;
-                if (col < 0 || col >= COLS) return;
+                if (col < 0 || col >= COLS) 
+                    return;
 
-                ((HumanPlayer) currentPlayer).setPendingMove(col);
+                ((HumanPlayer) game.getCurrentPlayer()).setPendingMove(col);
                 processTurn();
             }
         });
 
+        // Mouse move: update the hover indicator
         addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
@@ -52,48 +49,40 @@ public class BoardPanel extends JPanel {
                 }
             }
         });
-        //
+
+        // Start the first turn (needed if the first player is AI)
         SwingUtilities.invokeLater(this::processTurn);
     }
 
+        // Runs one turn: Human (already clicked) or AI (thinks in background)
     private void processTurn() {
-        if (winner != null || isDraw) return;
+        if (game.isGameOver()) 
+            return;
 
-        if (currentPlayer instanceof HumanPlayer) {
-            HumanPlayer human = (HumanPlayer) currentPlayer;
-            if (!human.hasPendingMove()) return;
+        if (game.getCurrentPlayer() instanceof HumanPlayer) {
+            HumanPlayer human = (HumanPlayer) game.getCurrentPlayer();
+            if (!human.hasPendingMove()) 
+                return;
 
-            int col = human.getMove(board);
-            try {
-                Board.dropCell(board, col, currentPlayer.getColour());
-                checkGameState();
-                swapPlayer();
-                repaint();
-                // trigger AI immediately if next player is AI
-                processTurn();
-            } catch (IllegalArgumentException ex) {
-                // column full, do nothing
+            int col = game.requestMove();
+            if (game.playMove(col)) {      // false = column full, do nothing
+                afterMove();
             }
 
-        } else if (currentPlayer instanceof AIPlayer) {
+        } else {
             SwingWorker<Integer, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Integer doInBackground() {
                     // runs on background thread so UI doesn't freeze
-                    return currentPlayer.getMove(board);
+                    return game.requestMove();
                 }
 
                 @Override
                 protected void done() {
                     // runs back on UI thread when AI is done thinking
                     try {
-                        int col = get();
-                        Board.dropCell(board, col, currentPlayer.getColour());
-                        checkGameState();
-                        swapPlayer();
-                        repaint();
-                        // trigger next turn in case it's AI vs AI
-                        processTurn();
+                        game.playMove(get());
+                        afterMove();
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
@@ -103,40 +92,35 @@ public class BoardPanel extends JPanel {
         }
     }
 
-    private void checkGameState() {
-        winner = Board.isGameWon(board);
-        if (winner == Cell.EMPTY) winner = null;
-        if (winner == null && Board.isGridFull(board)) isDraw = true;
-
-        if (winner != null || isDraw) {
-            SwingUtilities.invokeLater(() -> {
-                String message = isDraw ? "It's a draw!" :
-                        (winner == Cell.R ? "Red" : "Yellow") + " wins!";
-                Window window = SwingUtilities.getWindowAncestor(this);
-                DialogBuilder gameOverBuilder = new ChoiceDialogBuilder(window);
-                GameOverDialog gameOverDialog = new GameOverDialog(gameOverBuilder);
-                int choice = gameOverDialog.construct(message);
-                if (choice == GameOverDialog.PLAY_AGAIN) {
-                    resetGame();
-                } else {
-                    System.exit(0);
-                }
-            });
+        // UI-only reaction after a move (the logic itself is inside the Facade)
+    private void afterMove() {
+        repaint();
+        if (game.isGameOver()) {
+            showGameOverDialog();
+        } else {
+            processTurn();   // trigger next turn in case it's AI
         }
     }
 
-    private void swapPlayer() {
-        if (winner != null || isDraw) return;
-        currentPlayer = (currentPlayer == playerOne) ? playerTwo : playerOne;
+    // Game Over window (Builder from Stage 1) + Play Again / Quit
+    private void showGameOverDialog() {
+        SwingUtilities.invokeLater(() -> {
+            String message = game.isDraw() ? "It's a draw!" :
+                    (game.getWinner() == Cell.R ? "Red" : "Yellow") + " wins!";
+            Window window = SwingUtilities.getWindowAncestor(this);
+            DialogBuilder gameOverBuilder = new ChoiceDialogBuilder(window);
+            GameOverDialog gameOverDialog = new GameOverDialog(gameOverBuilder);
+            int choice = gameOverDialog.construct(message);
+            if (choice == GameOverDialog.PLAY_AGAIN) {
+                game.reset();
+                repaint();
+                processTurn();
+            } else {
+                System.exit(0);
+            }
+        });
     }
 
-    private void resetGame() {
-        board.resetBoard();
-        winner = null;
-        isDraw = false;
-        currentPlayer = playerOne;
-        repaint();
-    }
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -163,16 +147,16 @@ public class BoardPanel extends JPanel {
         String status;
         Color statusColor;
 
-        if (winner != null) {
-            status = (winner == Cell.R ? "Red" : "Yellow") + " wins!";
-            statusColor = winner == Cell.R ? new Color(220, 60, 60) : new Color(240, 200, 40);
-        } else if (isDraw) {
+        if (game.getWinner() != null) {
+            status = (game.getWinner() == Cell.R ? "Red" : "Yellow") + " wins!";
+            statusColor = game.getWinner() == Cell.R ? new Color(220, 60, 60) : new Color(240, 200, 40);
+        } else if (game.isDraw()) {
             status = "It's a draw!";
             statusColor = Color.LIGHT_GRAY;
         } else {
-            String playerLabel = currentPlayer.getColour() == Cell.R ? "Red" : "Yellow";
+            String playerLabel = game.getCurrentPlayer().getColour() == Cell.R ? "Red" : "Yellow";
             status = playerLabel + "'s turn";
-            statusColor = currentPlayer.getColour() == Cell.R
+            statusColor = game.getCurrentPlayer().getColour() == Cell.R
                     ? new Color(220, 60, 60)
                     : new Color(240, 200, 40);
         }
@@ -187,11 +171,11 @@ public class BoardPanel extends JPanel {
         g2.drawString(status, dotX + 26, 68);
     }
 
-    private void drawHoverIndicator(Graphics2D g2) {
-        if (hoveredCol < 0 || winner != null || isDraw) return;
-        if (!(currentPlayer instanceof HumanPlayer)) return;
+        private void drawHoverIndicator(Graphics2D g2) {
+        if (hoveredCol < 0 || game.isGameOver()) return;
+        if (!(game.getCurrentPlayer() instanceof HumanPlayer)) return;
 
-        Color playerColor = currentPlayer.getColour() == Cell.R
+        Color playerColor = game.getCurrentPlayer().getColour() == Cell.R
                 ? new Color(220, 60, 60, 160)
                 : new Color(240, 200, 40, 160);
 
@@ -216,7 +200,7 @@ public class BoardPanel extends JPanel {
         // Cells
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLS; col++) {
-                Cell cell = Board.getCell(board.getGrid(), row, col);
+                Cell cell = game.getCell(row, col);
 
                 // Cell shadow
                 g2.setColor(new Color(0, 0, 0, 60));
@@ -256,3 +240,5 @@ public class BoardPanel extends JPanel {
         }
     }
 }
+
+
