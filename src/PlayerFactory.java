@@ -5,8 +5,24 @@ public class PlayerFactory {
     public static Player createPlayer(int type, Cell colour, int difficulty) {
         switch (type) {
             case HUMAN: return new HumanPlayer(colour);
-            case AI: return new AIPlayer(colour, difficulty);
+            case AI: return createAIPlayer(colour, difficulty);
             default: return new HumanPlayer(colour);
+        }
+    }
+
+    // Difficulty decides the minimax depth and which decorators wrap the AI.
+    // TODO: switch to the commented lines once RandomMoveDecorator and TimerDecorator exist.
+    private static Player createAIPlayer(Cell colour, int difficulty) {
+        switch (difficulty) {
+            case 1:
+                // return new TimerDecorator(new RandomMoveDecorator(new AIPlayer(colour, 2), 0.55));
+                return new AIPlayer(colour, 2);
+            case 2:
+                // return new TimerDecorator(new RandomMoveDecorator(new AIPlayer(colour, 4), 0.30));
+                return new AIPlayer(colour, 4);
+            default:
+                // return new TimerDecorator(new AIPlayer(colour, 6));
+                return new AIPlayer(colour, 6);
         }
     }
 }

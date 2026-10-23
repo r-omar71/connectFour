@@ -75,7 +75,7 @@ public class BoardPanel extends JPanel {
                 // column full, do nothing
             }
 
-        } else if (currentPlayer instanceof AIPlayer) {
+        } else {
             SwingWorker<Integer, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Integer doInBackground() {
