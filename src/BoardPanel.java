@@ -81,8 +81,9 @@ public class BoardPanel extends JPanel {
                 protected void done() {
                     // runs back on UI thread when AI is done thinking
                     try {
-                        game.playMove(get());
-                        afterMove();
+                        if (game.playMove(get())) {   // false = invalid move, do nothing
+                            afterMove();
+                        }
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
