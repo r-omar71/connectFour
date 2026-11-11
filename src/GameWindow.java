@@ -22,7 +22,6 @@ public class GameWindow extends JFrame {
         Cell colourTwo = firstIsRed ? Cell.Y : Cell.R;
 
         // Build players based on chosen mode
-        
         int difficulty = 0;
         if (mode == ModeDialog.HUMAN_VS_AI ) {
             DialogBuilder difficultyBuilder = new ChoiceDialogBuilder(this);
@@ -58,8 +57,8 @@ public class GameWindow extends JFrame {
         
 
 
-        Board board = new Board();
-        add(new BoardPanel(board, playerOne, playerTwo));
+        GameFacade game = new GameFacade(playerOne, playerTwo);
+        add(new BoardPanel(game));
         pack();
         setLocationRelativeTo(null);
     }
